@@ -19,7 +19,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Project Overview
 
 This project seeks to adress a major point of planning efforts in hospitality management: the prediction of booking cancellations. 
-Within the project, historical data of cancelled and checked-in hotel bookings is explored for interesting relationships and utilized in machine learning models to predict whether a customer will cancel their booking.  
+Within the project, historical data of cancelled and checked-in hotel bookings is explored for interesting relationships and utilized in machine learning models to predict whether a customer will cancel their booking. 
+
 The dataset used for this project will be the Hotel booking demand dataset [@kaggle], hosted on kaggle.com, originally published in @antonio2019hotel. 
 It contains booking information from two different portugese hotels, one based in a city, the other being a resort hotel. 
 The focus will lie on the target variable - which describes whether a booking was cancelled before the customer arrived or not. 
