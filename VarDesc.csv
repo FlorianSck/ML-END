@@ -1,0 +1,33 @@
+Variable,Type,Description
+hotel,categorical,"Type of hotel, H1 = Resort Hotel or H2 = City Hotel"
+is_canceled,integer,Value indicating if the booking was canceled (1) or not(0)
+lead_time,integer,Number of days between booking and arrival date
+arrival_date_year,integer,Year of arrival date
+arrival_date_month,categorical,Month of arrival date
+arrival_date_week_number,integer,Week number of year for arrival date
+arrival_date_day_of_month,integer,Day of arrival date
+stays_in_weekend_nights,integer,Number of weekend nights the guest stayed or booked
+stays_in_week_nights,integer,Number of week nights the guest stayed or booked
+adults,integer,Number of adults
+children,integer,Number of children
+babies,integer,Number of babies
+meal,categorical,Type of meal booked
+country,categorical,Country of origin
+market_segment,categorical,Market segment designation
+distribution_channel,categorical,Booking distribution channel
+is_repeated_guest,integer,Value indicating if the booking name was from a repeated guest (1) or not (0)
+previous_cancellations,integer,Number of previous bookings that were cancelled
+previous_bookings_not_canceled,integer,Number of previous bookings that were not cancelled
+reserved_room_type,categorical,Code of room type reserved
+assigned_room_type,categorical,Code of room type assigned due to hotel operation reasons
+booking_changes,integer,Number of changes made to the booking
+deposit_type,categorical,Indication on if the customer made a deposit to guarantee the booking
+agent,categorical,ID of the travel agency that made the booking
+company,categorical,ID of the company that made the booking
+days_in_wating_list,integer,Number of days the booking was in the waiting list
+customer_type,categorical,"Type of booking, one of: Contract, Group, Transient, Transient-party"
+adr,float,Average daily rate
+required_car_parking_spaces,integer,Number of car parking spaces required by the customer
+total_of_special_requests,integer,Number of special requests made by the customer
+reservation_status,categorical,"Reservation last status, one of: Canceled, Check-Out, No-Show"
+reservation_status_date,categorical,Date at which the last status was set
