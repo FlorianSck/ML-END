@@ -9,7 +9,7 @@ bibliography: bibliography.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 # Capstone Project: Prediction of Hotel Booking Cancellations
@@ -71,19 +71,51 @@ This is important, because it is valid to assume cancellations to occur much les
 _(approx. 2-4 pages)_
 
 ### Data Exploration
-In this section, you will be expected to analyze the data you are using for the problem. This data can either be in the form of a dataset (or datasets), input data (or input files), or even an environment. The type of data should be thoroughly described and, if possible, have basic statistics and information presented (such as discussion of input features or defining characteristics about the input or environment). Any abnormalities or interesting qualities about the data that may need to be addressed have been identified (such as features that need to be transformed or the possibility of outliers). Questions to ask yourself when writing this section:
-- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
-- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
-- _If a dataset is **not** present for this problem, has discussion been made about the input space or input data for your problem?_
-- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
 
-```{r}
+The dataset utilized is a publicly available data set hosted on Kaggle [@kaggle], originally published in @antonio2019hotel. The original data was cleaned and prepared by @tidytuesday. 
+Since the data is a result of an exercise in data cleaning and manipulation, only minimal preprocessing is needed to enable predictive modelling with this data. 
+There are no real missing values in the dataset that contain actually missing information. Instead, empty values indicate the non-existence of the specific attribute in that case. For example, the variable `children` has some null values. 
+However, that does not mean there are actually missings for that variable. Instead, this simply implies that there are zero children associated with a booking. 
+Overall, this means there is not a lot of data cleaning needed to start working with the presented data. 
+Nonetheless, the data will be explored further in the following section.
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(knitr)
+library(kableExtra)
+
 df <- read.csv("VarDesc.csv")
-kableExtra::kable(df, caption = "Overview of the variables present in the dataset")
+```
+
+To start off, the data includes numerical and categorical data. 
+
+```{r message=FALSE, warning=FALSE}
+df_cat <- filter(df, Type == "categorical")
+
+kable(df_cat, 
+      "latex", 
+      booktabs = T,
+      caption = "Overview of the categorical variables present in the dataset"
+      ) %>% 
+  column_spec(3, width = "6cm")
 ```
 
 
+```{r message=FALSE, warning=FALSE}
+df_num <- filter(df, Type == "integer" | Type == "float")
 
+kable(df_num, 
+      "latex", 
+      booktabs = T,
+       caption = "Overview of the numerical variables present in the dataset"
+      #col.names =c("Item", "Short Title", "Very Very Very Very Very Very Long Title")
+      ) %>% 
+  column_spec(3, width = "6cm")
+```
+
+- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
+- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
+- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
 
 ### Exploratory Visualization
 In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
