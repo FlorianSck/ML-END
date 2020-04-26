@@ -284,7 +284,7 @@ The functions for metrics were also imported from scikit-learn. More precisely, 
 For the actual modeling, `XGBClassifier` was imported from the python package `xgboost`.
 
 After preprocessing the features and splitting the data in training and testing, the training data was utilized for a first simple `XGBClassifier` fit. Afterwards, predictions were carried out on the test data and the respective metrics calculated. 
-In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. 
+In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. The randomized sets of parameters were drawn from their respective distributions via the `stats` module from the `scipy` package.
 
 ### Refinement
 In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
@@ -309,12 +309,20 @@ The model produced an accuracy of 82.30 % and a ROC AUC score of 78.16 % on the 
 
 In the randomized hyperparameter search, the set of parameter searched were :
 
-- n_estimators
-- learning_rate
-- subsample,
-- max_depth,
-- colsample_bytree,
-- min_child_weight
+- n_estimators: random integers between 150 and 1000
+- learning_rate: floats drawn from a uniform distribution between 0.01 and 0.6
+- subsample: floats drawn from a uniform distribution between 0.3 and 0.9
+- max_depth: a list of integer values from 3 to 9
+- colsample_bytree: floats drawn from a uniform distribution between 0.3 and 0.9
+- min_child_weight: a list of integer values from 1 to 4
+
+The randomized parameters were drawn via the `stats.uniform` and `stats.randint` functions from the `scipy` package for the floats and integer values respectively.
+The numer of iterations in the `RandomizedSearchCV` function were set to 25.
+The different estimators are valuated against their ROC AUC score on the cross validation holdout sets.
+
+After fitting, the function allows us to extract different estimators fitted via the `fit` method of the `RandomizedSearchCV` object. 
+Most importantly, we can extract the best estimator fitted with this method, which is the final model. 
+In terms of accuracy, the final model produces a score of 85.96 % and a ROC AUC score of 84.30 % on the test data.
 
 ## IV. Results
 _(approx. 2-3 pages)_
@@ -325,6 +333,10 @@ In this section, the final model and any supporting qualities should be evaluate
 - _Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?_
 - _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
 - _Can results found from the model be trusted?_
+
+Especially in terms of the ROC AUC score, the gain of over 6 % over the basic xgboost model is quite significant. 
+The accuracy could also be improved by over 3 %.
+
 
 ### Justification
 In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
