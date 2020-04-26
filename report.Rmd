@@ -64,34 +64,29 @@ respectively. Again, _True Positives_ denote the number of correctly classified 
 
 For this problem, it is also worth considering precision, defined as 
 $$\text{Precision} = \frac{\text{True Positives}}{\text{True Positives + False Positvies}}$$. 
-This is important, because it is valid to assume cancellations to occur much less frequently in booking data than actual check-ins. Where accuracy allows for measurement of the model's ability to seperate the two classes, precision tells us how well the model is at predicting the less-often occuring class. 
+This is important, because it is valid to assume cancellations to occur much less frequently in booking data than actual check-ins. Where accuracy allows for measurement of the model's ability to separate the two classes, precision tells us how well the model is at predicting the less-often occurring class. 
 
 
+\newpage
 ## II. Analysis
-_(approx. 2-4 pages)_
 
 ### Data Exploration
 
-The dataset utilized is a publicly available data set hosted on Kaggle [@kaggle], originally published in @antonio2019hotel. The original data was cleaned and prepared by @tidytuesday. 
-Since the data is a result of an exercise in data cleaning and manipulation, only minimal preprocessing is needed to enable predictive modelling with this data. 
+The dataset utilized is a publicly available data set hosted on Kaggle [@kaggle], originally published in @antonio2019hotel. The original data was cleaned and prepared by @tidytuesday. It holds 119390 observations of 32 variables.
+Since the data is a result of an exercise in data cleaning and manipulation, only minimal preprocessing is needed to enable predictive modeling with this data. 
 There are no real missing values in the dataset that contain actually missing information. Instead, empty values indicate the non-existence of the specific attribute in that case. For example, the variable `children` has some null values. 
 However, that does not mean there are actually missings for that variable. Instead, this simply implies that there are zero children associated with a booking. 
+
 Overall, this means there is not a lot of data cleaning needed to start working with the presented data. 
 Nonetheless, the data will be explored further in the following section.
+To start off, the data includes numerical and categorical data. Table 1 shows a list of categorical variables, while Table 2 shows numerical default. 
 
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
 library(knitr)
 library(kableExtra)
-
 df <- read.csv("VarDesc.csv")
-```
-
-To start off, the data includes numerical and categorical data. 
-
-```{r message=FALSE, warning=FALSE}
 df_cat <- filter(df, Type == "categorical")
-
 kable(df_cat, 
       "latex", 
       booktabs = T,
@@ -100,6 +95,14 @@ kable(df_cat,
   column_spec(3, width = "6cm")
 ```
 
+Table 1 is already assuming some preprocessing, as the variable `agent` in the dataset is a numerical encoding of the ID of the travel agency that made the booking. 
+However, this information is categorical, as there is no logic behind differences in the numerical values. 
+This means the agent variable needs to be preprocessed into a categorical variable before being used in a model, so we can later one-hot encode them accordingly.
+Similarly, the `company` variable is also an encoded ID of a company through which the booking was made. 
+As the numerical values are not accurate representations, this variable also needs to be treated as a categorical variable.
+Additionally, the target variable is already encoded into a numerical value, as needed for the modeling. 
+The information behind that is inherently categorical, as a one denotes a canceled booking, while a zero was not canceled. 
+The categorical variables `reservation_status` and `reservation_status_date` are variables which could provide target leakage in the modeling phase and as such need to be removed at a later point in the feature preprocessing. 
 
 ```{r message=FALSE, warning=FALSE}
 df_num <- filter(df, Type == "integer" | Type == "float")
@@ -108,47 +111,180 @@ kable(df_num,
       "latex", 
       booktabs = T,
        caption = "Overview of the numerical variables present in the dataset"
-      #col.names =c("Item", "Short Title", "Very Very Very Very Very Very Long Title")
       ) %>% 
   column_spec(3, width = "6cm")
 ```
 
-- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
-- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
-- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
+Table 2 showcases numerical variables in the data. Besides the already discussed target variable, there exists information about the arrival dates, general information about the length of stay, the customer's family, and pricing. 
+Furthermore, there is also information not to be considered in the modeling phase. The variables `booking_changes` change with a booking over time, so it should be removed to avoid leakage. 
+
+```{r}
+na_df <- data.frame(
+  Variable = c("children", "country", "agent", "company"),
+  NAs = c(4, 488, 16340, 112593))
+
+kable(na_df,
+      "latex",
+      booktabs = T,
+      caption = "Number of NA-Values per Variable with NA-Values present",
+      col.names = c("Variable", "# of NA-Values")) # %>% 
+  #column_spec(3, width = "6cm")
+```
+
+Table 3 shows the missing values present in the data set in more detail. 
+The country variable does not need to be filled at the time of booking, so NA values can occur here and need to be replaced.
+If an agent variable is NA, it means that the booking was not made via an agent, which is information as well.
+Similarly, if company is NA, the booking was made by a private customer. 
+The four children NA values will be set to zero for the modeling. 
+Additionally, in the meal column, there exist two ways to display the same information. Undefined is equal to SC, so we will need to replace Undefined with SC. 
+Utilizing knowledge required at a later stage, we will also remove observations with 0 customers.
+
+In general, to create a better understanding of the data, some statistics can be reported. In general, the ratio of canceled bookings in the data is 36.08 %, while the non-canceled booking make up 62.92 % of the data. 
+While this shows that the classes are not exactly balanced in a 50/50 split, the data is far from a truly unbalanced classification problem. 
+This means the problem does not require additional methods of balancing the data prior to modeling. 
+Furthermore, this includes the advantage of being a very realistic representation of the business problem behind the use case. 
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+hotel_bookings <- read_csv("data/hotel_bookings.csv")
+
+sumry <- data.frame(
+  Variable = "adr",
+  Min = min(hotel_bookings$adr),
+  First_Quantile = quantile(hotel_bookings$adr, probs = 0.25)[1][[1]],
+  Median = median(hotel_bookings$adr),
+  Third_Quantile = quantile(hotel_bookings$adr, probs = 0.75)[1][[1]],
+  Max = max(hotel_bookings$adr),
+  mean = mean(hotel_bookings$adr),
+  sd = sd(hotel_bookings$adr)
+)
+
+kable(sumry,
+      "latex",
+      booktabs = T,
+      caption = "Summary Statistics for the adr Variable",
+      col.names = c("Variable", "Min", "First Quantile", "Median", "Third Quantile", "Max", "Mean", "Standard Deviation"))
+```
+
+Table 4 shows a closer look at the summary statistics of the `adr` variable, which highlights some irregularities. 
+For example, the minimum value of the daily rate should not be negative and the maximum value of 5400 seems to be an irregularity as well. 
+For later analysis, these values will be removed, as they seem untrustworthy and might be due to an error in the booking system. 
+
 
 ### Exploratory Visualization
-In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant characteristic or feature about the dataset or input data?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+
+The data is a collection of bookings from two portugese hotels. With the categorical variable `hotel`, the hotel specific ratios of cancellations can be analyzed. Figure 1 shows the distribution of bookings between hotels on the left hand side, while it offers an additional look at the distribution of cancellations between the two hotels on the right hand side. 
+
+```{r, out.width = "450px", fig.cap="Booking Distribution by Hotel"}
+knitr::include_graphics("assets/bookings_by_hotel.png")
+```
+
+An important takeaway from Figure 1 is the fact that the city hotel is responsible for a larger amount of bookings. 
+This makes sense, as there is more likely to be a high turnover of guests in a city based hotel, than in a resort hotel. 
+Additionally, this could also be explained by longer stays in resort hotel, as these stays tend to be longer.  
+Interestingly enough, the ratio of canceled bookings is also higher for the city hotel. 
+This is an indicator that any model should make use of the hotel variable. 
+
+```{r, out.width = "450px", fig.cap="ADR Distribution by Hotel and Target Variable"}
+knitr::include_graphics("assets/adr_dist_by_hotel.png")
+```
+
+Figure 2 visualizes the distribution of the variable `adr`, the average daily rate of a stay, which is defined by dividing the sum of all lodging transactions by the total number of staying nights, against the two hotel variables and for canceled and non-canceled bookings. 
+The figure indicates a smaller spread of the lodging price for canceled city hotel bookings. 
+This could indicate special cheaper offers, which might result in more frequent cancellations, as these bookings might be more spontaneous in nature.
+For the resort hotel, the distributions do not differ a lot in shape. For the non-canceled bookings, there seems to be a larger density of observations around its median value, while the canceled bookings are distributed a bit more evenly. 
+
+```{r, out.width = "450px", fig.cap="ADR Distribution by Hotel and Target Variable"}
+knitr::include_graphics("assets/lead_time_dist_by_hotel.png")
+```
+
+Figure 3 showcases the distribution of the variable `lead_time`, which is defined as the number of days that elapsed between the entering date of the booking into the booking system and the arrival date, against the two hotel variables and grouped by the target variable. 
+Interestingly enough, the median values of the distributions are higher for canceled bookings, meaning bookings made longer ahead of time were canceled more frequently. Additionally, the distribution the lead time of canceled bookings is shaped more evenly than their counterparts. Taking this into account, `lead_time` can be considered an important variable for the modeling process as well. 
 
 ### Algorithms and Techniques
-In this section, you will need to discuss the algorithms and techniques you intend to use for solving the problem. You should justify the use of each one based on the characteristics of the problem and the problem domain. Questions to ask yourself when writing this section:
-- _Are the algorithms you will use, including any default variables/parameters in the project clearly defined?_
-- _Are the techniques to be used thoroughly discussed and justified?_
-- _Is it made clear how the input data or datasets will be handled by the algorithms and techniques chosen?_
+
+In the modeling process, the XGBoost algorithm will be utilized for modeling [@xgboost].
+The present data is standard tabular data, which is an area where XGBoost often outshines other simpler methods like logistic regressions, but also does not fall behind more complex methods, like neural networks. 
+It is often used in competitions with tabular data, where it tends to beat out other methods consistently. 
+XGBoost is a decision-tree-based ensemble machine learning algorithm utilizing a gradient boosting framework, essentially a further development of trees compared to random forests.
+Furthermore, we will utilize cross-validation within the training data for randomized hyperparameter-tuning to build the final predictive model. 
+This allows for even better performance of the model, while not overfitting to the training data. 
+Additionally, XGBoost is also easily available on AWS SageMaker, meaning such a solution could very well be integrated in actual real-world systems.
+In regards to the data utilized, the data will be split into training/test in a ratio of 80/20, with final results being reported on the test set.
 
 ### Benchmark
-In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
-- _Has some result or value been provided that acts as a benchmark for measuring performance?_
-- _Is it clear how this result or value was obtained (whether by data or by hypothesis)?_
 
+In the modeling, XGBoost will be applied to the data and tuned in regards to its hyperparameters. As such, in Chapter III a simple XGBoost model will be introduced as a benchmark for the hyperparameter tuning. 
+The general benchmark is a zero-rule based voting on the test set. This is simply classifying every observation as the majority class, which is 0 in this case. 
+Such a benchmark produces an accuracy of 62.55 % and a ROC AUC score of 50% on the test data, which holds 23480 observations. 
 
+\newpage
 ## III. Methodology
 _(approx. 3-5 pages)_
 
 ### Data Preprocessing
-In this section, all of your preprocessing steps will need to be clearly documented, if any were necessary. From the previous section, any of the abnormalities or characteristics that you identified about the dataset will be addressed and corrected here. Questions to ask yourself when writing this section:
-- _If the algorithms chosen require preprocessing steps like feature selection or feature transformations, have they been properly documented?_
-- _Based on the **Data Exploration** section, if there were abnormalities or characteristics that needed to be addressed, have they been properly corrected?_
-- _If no preprocessing is needed, has it been made clear why?_
+
+As mentioned above, the data requires very little preprocessing, as it is the result of such an exercise.
+However, there are still some values data points which need to be taken care of. 
+There are certain null values, as well as wrong observations and categorical variables yet to be encoded as such. Their treatment will be discussed, as well as further feature preprocessing. 
+
+Since they are believed to be wrong observations, the dataset is filtered for observations with only possible values for the variable `adr`, as well as values for `adr` less than 5200. The variable `meal` holds the attribute `'Undefined'`, which means the same as the attribute `'SC'`, meaning the former are set to the latter.
+Additionally, observations where the sum of the numbers of adults, children and babies equal zero are removed from the data, as this would mean that there are no actual customers associated with the booking. 
+
+NA values that need to be replaced were also discussed.  
+
+- In the variable `agent`, these values are set to 0.
+- In the variable `comapny`, these values are set to 0.
+- In the variable `country`, these values are set to `'None'`.
+- In the variable `children`, these values are set to 0.
+
+Furthermore, the variable `agent` was reduced in the space of its attributes. Since there is a very large number of possible travel agents, the variable was aggregated to its top eight attributes plus an additional filler attribute for the small agencies. 
+Afterwards, the variables `agent` and `company` were transformed to be of type `object`, to better capture there nature as categorical variables. 
+The categorical variables in the model are one-hot encoded to dummy variables, using the `pd.get_dummies()` method.
+
+The final feature set in the models, depending on the variable type is as follows:  
+
+Numerical:
+
+- `lead_time`, 
+- `arrival_date_week_number`, 
+- `arrival_date_day_of_month`,
+- `stays_in_weekend_nights`, 
+- `stays_in_week_nights`, 
+- `adults`, 
+- `children`,
+- `babies`, 
+- `is_repeated_guest`, 
+- `previous_cancellations`,
+- `previous_bookings_not_canceled`, 
+- `company`,
+- `required_car_parking_spaces`, 
+- `total_of_special_requests`, 
+- `adr`
+
+Categorical:
+
+- `hotel`, 
+- `agent`,
+- `arrival_date_month`,
+- `meal`,
+- `market_segment`,
+- `distribution_channel`,
+- `reserved_room_type`,
+- `deposit_type`,
+- `customer_type`
+
+After one-hot encoding, the final feature space is 72 variables. 
 
 ### Implementation
-In this section, the process for which metrics, algorithms, and techniques that you implemented for the given data will need to be clearly documented. It should be abundantly clear how the implementation was carried out, and discussion should be made regarding any complications that occurred during this process. Questions to ask yourself when writing this section:
-- _Is it made clear how the algorithms and techniques were implemented with the given datasets or input data?_
-- _Were there any complications with the original metrics or techniques that required changing prior to acquiring a solution?_
-- _Was there any part of the coding process (e.g., writing complicated functions) that should be documented?_
+
+In terms of implementation, multiple methods from scikit-learn were utilized. 
+The initial data split between training and testing data was done with the train_test_split function from `sklearn.model_selection`, for the hyperparameter tuning, the functions `KFold`, `cross_validate`, `cross_val_score` and `RandomizedSearchCV` were also imported. 
+The functions for metrics were also imported from scikit-learn. More precisely, the functions `accuracy_score`, `f1_score`, `roc_auc_score`, `precision_score` and `recall_score` from `sklearn.metrics` were imported. 
+For the actual modeling, `XGBClassifier` was imported from the python package `xgboost`.
+
+After preprocessing the features and splitting the data in training and testing, the training data was utilized for a first simple `XGBClassifier` fit. Afterwards, predictions were carried out on the test data and the respective metrics calculated. 
+In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. 
 
 ### Refinement
 In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
@@ -156,6 +292,29 @@ In this section, you will need to discuss the process of improvement you made up
 - _Is the process of improvement clearly documented, such as what techniques were used?_
 - _Are intermediate and final solutions clearly reported as the process is improved?_
 
+The initial xgboost classifier was estimated with a fairly standard set of parameters. More precisely, these were: 
+
+- colsample_bylevel=1,
+- colsample_bynode=1,
+- colsample_bytree=1,
+- gamma=0,
+- learning_rate=0.1, 
+- max_delta_step=0, 
+- max_depth=3,
+- min_child_weight=1, 
+- missing=None, 
+- n_estimators=100.
+
+The model produced an accuracy of 82.30 % and a ROC AUC score of 78.16 % on the testing dataset. 
+
+In the randomized hyperparameter search, the set of parameter searched were :
+
+- n_estimators
+- learning_rate
+- subsample,
+- max_depth,
+- colsample_bytree,
+- min_child_weight
 
 ## IV. Results
 _(approx. 2-3 pages)_
