@@ -1,7 +1,7 @@
 ---
 title: "Machine Learning Engineer Nanodegree"
 author: "Florian Sckade"
-date: "April 17th, 2020"
+date: "April 26th, 2020"
 output:
   pdf_document: default
   html_document: default
@@ -80,6 +80,7 @@ However, that does not mean there are actually missings for that variable. Inste
 Overall, this means there is not a lot of data cleaning needed to start working with the presented data. 
 Nonetheless, the data will be explored further in the following section.
 To start off, the data includes numerical and categorical data. Table 1 shows a list of categorical variables, while Table 2 shows numerical default. 
+Due to the large number of variables present, no specific observation will be showcased as example. Instead, the tables will help illustrate general implications and contents of the data
 
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
@@ -220,7 +221,6 @@ Such a benchmark produces an accuracy of 62.55 % and a ROC AUC score of 50% on t
 
 \newpage
 ## III. Methodology
-_(approx. 3-5 pages)_
 
 ### Data Preprocessing
 
@@ -287,10 +287,6 @@ After preprocessing the features and splitting the data in training and testing,
 In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. The randomized sets of parameters were drawn from their respective distributions via the `stats` module from the `scipy` package.
 
 ### Refinement
-In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
-- _Has an initial solution been found and clearly reported?_
-- _Is the process of improvement clearly documented, such as what techniques were used?_
-- _Are intermediate and final solutions clearly reported as the process is improved?_
 
 The initial xgboost classifier was estimated with a fairly standard set of parameters. More precisely, these were: 
 
@@ -305,9 +301,9 @@ The initial xgboost classifier was estimated with a fairly standard set of param
 - missing=None, 
 - n_estimators=100.
 
-The model produced an accuracy of 82.30 % and a ROC AUC score of 78.16 % on the testing dataset. 
+The model produced an accuracy of 82.13 % and a ROC AUC score of 88.03 % on the testing dataset. 
 
-In the randomized hyperparameter search, the set of parameter searched were :
+In the randomized hyperparameter search, the set of parameter searched were:
 
 - n_estimators: random integers between 150 and 1000
 - learning_rate: floats drawn from a uniform distribution between 0.01 and 0.6
@@ -317,60 +313,56 @@ In the randomized hyperparameter search, the set of parameter searched were :
 - min_child_weight: a list of integer values from 1 to 4
 
 The randomized parameters were drawn via the `stats.uniform` and `stats.randint` functions from the `scipy` package for the floats and integer values respectively.
-The numer of iterations in the `RandomizedSearchCV` function were set to 25.
+The number of iterations in the `RandomizedSearchCV` function were set to 25.
 The different estimators are valuated against their ROC AUC score on the cross validation holdout sets.
 
 After fitting, the function allows us to extract different estimators fitted via the `fit` method of the `RandomizedSearchCV` object. 
 Most importantly, we can extract the best estimator fitted with this method, which is the final model. 
-In terms of accuracy, the final model produces a score of 85.96 % and a ROC AUC score of 84.30 % on the test data.
+In terms of accuracy, the final model produces a score of 85.26 % and a ROC AUC score of 91.89 % on the test data.
 Especially in terms of the ROC AUC score, the gain of over 6 % over the basic xgboost model is quite significant. 
 The accuracy could also be improved by over 3 %.
 
+\newpage
 ## IV. Results
-_(approx. 2-3 pages)_
 
 ### Model Evaluation and Validation
-In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
-- _Is the final model reasonable and aligning with solution expectations? Are the final parameters of the model appropriate?_
-- _Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?_
-- _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
-- _Can results found from the model be trusted?_
+
 
 Following the model's test results, it was able to correctly predict whether a booking was going to be canceled or not with an accuracy of 85.96 %, meaning a large portion of the observations could be correctly predicted. 
 In light of the underlying business problem, the solution's precision of 83.29% is also very important, as it shows that that percentage of positively predicted values were actually canceled bookings, together with a recall of 77.84 %. 
 Since the problem is not balanced according to a strict 50/50 rule, this result is very impressive and shows its potential value in a real application.
 
-*final model description*
+The final model has a `n_estimators` value of 778, a `learning_rate` value of 0.3226, a `subsample` value of 0.9511, a `max_depth` value of 5, a `colsample_bytree` value of 0.6911 and a `min_child_weight` of 4 for the searched parameter space. The other parameters were set as in the standard xgboost classifier.
 
 The general estimation technique evaluates model fits in a cross-validation procedure. As such, the resulting candidate models come with an out-of-sample performance before being evaluated on the test set. 
-As a result of this, the model results are quite robust, given a common direction of evaluation in both cross-validation and test performance, indicating a strong ability to generalize to unseed data, as well as showcasing trustworthiness of the results.
+As a result of this, the model results are quite robust, given a common direction of evaluation in both cross-validation and test performance, indicating a strong ability to generalize to unseen data, as well as showcasing trustworthiness of the results.
 
 ### Justification
-In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
-- _Are the final results found stronger than the benchmark result reported earlier?_
-- _Have you thoroughly analyzed and discussed the final solution?_
-- _Is the final solution significant enough to have solved the problem?_
 
 The zero rule benchmark model produced an accuracy of 62.55 %, plus a ROC AUC score of 50 %. With the reported results of the hyperparametertuned model of an accuracy of 85.96 % and an ROC AUC score of 84.30 %, a substantial and significant increase over the benchmark could be produced. 
 In addition to the final models performance on these metrics, its precision and recall metrics show that there is a very real potential benefit of implementing it in a real world business scenario. 
 
-All in all, these evaluation metrics show that the tuned xgboost model is a significant enough solution to the illustrated problem.
+All in all, these evaluation metrics show that the tuned xgboost model is a significant enough solution to the illustrated problem. This means such a model is indeed able to classify potential hotel booking cancellations with a performance that could help generate business value for a hotel company.
 
+\newpage
 ## V. Conclusion
-_(approx. 1-2 pages)_
 
 ### Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant or important quality about the problem, dataset, input data, or results?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+
+Figure 4 illustrates the ROC curves of the basic xgboost model without any parameter tuning in comparison to its successor model, the xgboost model with hyperparameter tuning. 
+In general, the ROC curve plots the the True Positive Rate against the False Positive Rate, given a model's predicted classification probabilities. 
+In this way, classification models can be evaluated not just for exact classifications, but also in regards to probability thresholds. 
+The closer a model's graph is to the top left point, the better. 
+
+```{r, out.width = "350px", fig.cap="ROC Curve of Tuned XGBoost and Basic XGBoost"}
+knitr::include_graphics("assets/roc_plot.png")
+```
+
+Figure 4 shows how the tuned xgboost model strictly outperforms its non-tuned counterpart, as it has a higher True Positive Rate for any given False Positive Rate. 
+Considering the ease of implementation and comparably low cost of computing, such a tuned model offers a very fast improvement on a simple starting model. 
+
 
 ### Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-- _Have you thoroughly summarized the entire process you used for this project?_
-- _Were there any interesting aspects of the project?_
-- _Were there any difficult aspects of the project?_
-- _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
 
 For this project with the goal of accurately predicting canceled hotel bookings, hotel booking demand data was first acquired from Kaggle.com. 
 Afterwards, the relevant target variable and its potential predictors were analyzed in an exploratory matter, to motivate possible modeling decisions and find potential anomalies in the data. 
@@ -378,21 +370,20 @@ Afterwards, these findings were utilized in a feature engineering and preprocess
 This data was split into training and testing data. 
 The former was used in a cross-validation training phase, to produce a final model, which was then evaluated on the test data. 
 
+The benchmark set for the problem was basically a coin-flip model, not likely to be implemented in any real world scenario. The performance of the trained model exceeds my expectations, as I was expecting an accuracy score of about 75 %. 
+Especially interesting about this project are the potential outlooks on actually implementing a machine learning solution for this problem. 
+The information used in the data actually comes from real hospitality companies, and as such allows for the construction of real solutions to a real business problem.
+In my opinion, these implications are quite exciting and very fitting for the course focused on production settings of machine learning models. 
+As such, a possible improvement to the project is its transferring to AWS SageMaker, where one could easily utilize the python SDK to build, train and deploy the xgboost model.
+The resulting API could be used in the booking service of a hotel to trigger certain business responses to customers with a high probability of canceling. 
 
 ### Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-- _Are there further improvements that could be made on the algorithms or techniques you used in this project?_
-- _Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?_
-- _If you used your final solution as the new benchmark, do you think an even better solution exists?_
 
------------
+A possible improvement lies in the searched hyperparameter space utilized in this project. One could expand the number of parameters over which the models are fitted and evaluated. 
+Another extensions is the incorporation of other algorithms in the project, to establish other benchmarks. 
+One such example could be an LightGBM model, which is similar in performance to xgboost. 
+Possible performance improvements over the solution presented in this report could also lie in other ensemble methods. 
+For example, one could use an ensemble of boosting models to create even better predictions. 
 
-**Before submitting, ask yourself. . .**
 
-- Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Analysis** and **Methodology**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your analysis, methods, and results?
-- Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
-- Is the code that implements your solution easily readable and properly commented?
-- Does the code execute without error and produce results similar to those reported?
+## References
