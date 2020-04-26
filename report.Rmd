@@ -284,7 +284,7 @@ The functions for metrics were also imported from scikit-learn. More precisely, 
 For the actual modeling, `XGBClassifier` was imported from the python package `xgboost`.
 
 After preprocessing the features and splitting the data in training and testing, the training data was utilized for a first simple `XGBClassifier` fit. Afterwards, predictions were carried out on the test data and the respective metrics calculated. 
-In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. 
+In the next step, `RandomizedSearchCV` was used to tune hyperparameters over a set of randomly generated parameter-sets, to produce a final candidate model which was again used for carrying out predictions on the test set, before then calculating the appropriate metrics. The randomized sets of parameters were drawn from their respective distributions via the `stats` module from the `scipy` package.
 
 ### Refinement
 In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
@@ -309,12 +309,22 @@ The model produced an accuracy of 82.30 % and a ROC AUC score of 78.16 % on the 
 
 In the randomized hyperparameter search, the set of parameter searched were :
 
-- n_estimators
-- learning_rate
-- subsample,
-- max_depth,
-- colsample_bytree,
-- min_child_weight
+- n_estimators: random integers between 150 and 1000
+- learning_rate: floats drawn from a uniform distribution between 0.01 and 0.6
+- subsample: floats drawn from a uniform distribution between 0.3 and 0.9
+- max_depth: a list of integer values from 3 to 9
+- colsample_bytree: floats drawn from a uniform distribution between 0.3 and 0.9
+- min_child_weight: a list of integer values from 1 to 4
+
+The randomized parameters were drawn via the `stats.uniform` and `stats.randint` functions from the `scipy` package for the floats and integer values respectively.
+The numer of iterations in the `RandomizedSearchCV` function were set to 25.
+The different estimators are valuated against their ROC AUC score on the cross validation holdout sets.
+
+After fitting, the function allows us to extract different estimators fitted via the `fit` method of the `RandomizedSearchCV` object. 
+Most importantly, we can extract the best estimator fitted with this method, which is the final model. 
+In terms of accuracy, the final model produces a score of 85.96 % and a ROC AUC score of 84.30 % on the test data.
+Especially in terms of the ROC AUC score, the gain of over 6 % over the basic xgboost model is quite significant. 
+The accuracy could also be improved by over 3 %.
 
 ## IV. Results
 _(approx. 2-3 pages)_
@@ -326,12 +336,25 @@ In this section, the final model and any supporting qualities should be evaluate
 - _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
 - _Can results found from the model be trusted?_
 
+Following the model's test results, it was able to correctly predict whether a booking was going to be canceled or not with an accuracy of 85.96 %, meaning a large portion of the observations could be correctly predicted. 
+In light of the underlying business problem, the solution's precision of 83.29% is also very important, as it shows that that percentage of positively predicted values were actually canceled bookings, together with a recall of 77.84 %. 
+Since the problem is not balanced according to a strict 50/50 rule, this result is very impressive and shows its potential value in a real application.
+
+*final model description*
+
+The general estimation technique evaluates model fits in a cross-validation procedure. As such, the resulting candidate models come with an out-of-sample performance before being evaluated on the test set. 
+As a result of this, the model results are quite robust, given a common direction of evaluation in both cross-validation and test performance, indicating a strong ability to generalize to unseed data, as well as showcasing trustworthiness of the results.
+
 ### Justification
 In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
 - _Are the final results found stronger than the benchmark result reported earlier?_
 - _Have you thoroughly analyzed and discussed the final solution?_
 - _Is the final solution significant enough to have solved the problem?_
 
+The zero rule benchmark model produced an accuracy of 62.55 %, plus a ROC AUC score of 50 %. With the reported results of the hyperparametertuned model of an accuracy of 85.96 % and an ROC AUC score of 84.30 %, a substantial and significant increase over the benchmark could be produced. 
+In addition to the final models performance on these metrics, its precision and recall metrics show that there is a very real potential benefit of implementing it in a real world business scenario. 
+
+All in all, these evaluation metrics show that the tuned xgboost model is a significant enough solution to the illustrated problem.
 
 ## V. Conclusion
 _(approx. 1-2 pages)_
@@ -348,6 +371,13 @@ In this section, you will summarize the entire end-to-end problem solution and d
 - _Were there any interesting aspects of the project?_
 - _Were there any difficult aspects of the project?_
 - _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
+
+For this project with the goal of accurately predicting canceled hotel bookings, hotel booking demand data was first acquired from Kaggle.com. 
+Afterwards, the relevant target variable and its potential predictors were analyzed in an exploratory matter, to motivate possible modeling decisions and find potential anomalies in the data. 
+Afterwards, these findings were utilized in a feature engineering and preprocessing step, so that a numerical matrix of predictors was built. 
+This data was split into training and testing data. 
+The former was used in a cross-validation training phase, to produce a final model, which was then evaluated on the test data. 
+
 
 ### Improvement
 In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
