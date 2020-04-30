@@ -2,6 +2,10 @@
 
 This repository holds assets used for the Capstone Project of the Machine Learning Engineering Nanodegree by udacity.  
 
+## Development
+
+The associated Code was developed and executed in the Jupyter Notebook `Capstone Project.ipynb`.
+
 ## Project Proposal
 
 The associated project proposal is the file `proposal.pdf`.
